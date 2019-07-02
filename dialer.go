@@ -1,8 +1,17 @@
 package pqtimeouts
 
 import (
+	"fmt"
 	"net"
+	"os"
+	"syscall"
 	"time"
+)
+
+const (
+	idleKeepAliveSeconds = 30
+	keepAliveProbeCnt    = 4
+	keepAliveSeconds     = 120
 )
 
 type timeoutDialer struct {
@@ -24,7 +33,38 @@ func (t timeoutDialer) Dial(network string, address string) (net.Conn, error) {
 		return c, err
 	}
 
+	if err = setTCPSocketTimeoutFlags(c); err != nil {
+		return c, err
+	}
+
 	return &timeoutConn{conn: c, readTimeout: t.readTimeout, writeTimeout: t.writeTimeout}, nil
+}
+
+func setTCPSocketTimeoutFlags(conn net.Conn) error {
+	var err error
+	tcp, ok := conn.(*net.TCPConn)
+	if !ok {
+		return fmt.Errorf("Bad conn type: %T", conn)
+	}
+	if err = tcp.SetKeepAlive(true); err != nil {
+		return err
+	}
+	file, err := tcp.File()
+	if err != nil {
+		return err
+	}
+	fd := int(file.Fd())
+
+	if err = os.NewSyscallError("setsockopt", syscall.SetsockoptInt(fd, syscall.IPPROTO_TCP, syscall.TCP_KEEPIDLE, idleKeepAliveSeconds)); err != nil {
+		return err
+	}
+	if err = os.NewSyscallError("setsockopt", syscall.SetsockoptInt(fd, syscall.IPPROTO_TCP, syscall.TCP_KEEPCNT, keepAliveProbeCnt)); err != nil {
+		return err
+	}
+	if err = os.NewSyscallError("setsockopt", syscall.SetsockoptInt(fd, syscall.IPPROTO_TCP, syscall.TCP_KEEPINTVL, keepAliveSeconds)); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (t timeoutDialer) DialTimeout(network string, address string, timeout time.Duration) (net.Conn, error) {
