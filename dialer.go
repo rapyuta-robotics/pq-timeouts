@@ -9,9 +9,9 @@ import (
 )
 
 const (
-	idleKeepAliveSeconds = 30
-	keepAliveProbeCnt    = 4
-	keepAliveSeconds     = 120
+	idleKeepAliveStartSeconds     = 30
+	keepAliveProbeIntervalSeconds = 5
+	keepAliveProbeCnt             = 6
 )
 
 type timeoutDialer struct {
@@ -55,13 +55,13 @@ func setTCPSocketTimeoutFlags(conn net.Conn) error {
 	}
 	fd := int(file.Fd())
 
-	if err = os.NewSyscallError("setsockopt", syscall.SetsockoptInt(fd, syscall.IPPROTO_TCP, syscall.TCP_KEEPIDLE, idleKeepAliveSeconds)); err != nil {
+	if err = os.NewSyscallError("setsockopt", syscall.SetsockoptInt(fd, syscall.IPPROTO_TCP, syscall.TCP_KEEPIDLE, idleKeepAliveStartSeconds)); err != nil {
 		return err
 	}
 	if err = os.NewSyscallError("setsockopt", syscall.SetsockoptInt(fd, syscall.IPPROTO_TCP, syscall.TCP_KEEPCNT, keepAliveProbeCnt)); err != nil {
 		return err
 	}
-	if err = os.NewSyscallError("setsockopt", syscall.SetsockoptInt(fd, syscall.IPPROTO_TCP, syscall.TCP_KEEPINTVL, keepAliveSeconds)); err != nil {
+	if err = os.NewSyscallError("setsockopt", syscall.SetsockoptInt(fd, syscall.IPPROTO_TCP, syscall.TCP_KEEPINTVL, keepAliveProbeIntervalSeconds)); err != nil {
 		return err
 	}
 	return nil
