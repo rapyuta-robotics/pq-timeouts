@@ -78,6 +78,8 @@ func (t timeoutDialer) DialTimeout(network string, address string, timeout time.
 	if err != nil || c == nil {
 		return c, err
 	}
-
+	if err = setTCPSocketTimeoutFlags(c); err != nil {
+		return c, err
+	}
 	return &timeoutConn{conn: c, readTimeout: t.readTimeout, writeTimeout: t.writeTimeout}, nil
 }
