@@ -1,8 +1,11 @@
 package pqtimeouts
 
 import (
+	"database/sql/driver"
 	"fmt"
+	"golang.org/x/sys/unix"
 	"net"
+	"os"
 	"time"
 )
 
@@ -26,6 +29,14 @@ func (t *timeoutConn) Read(b []byte) (n int, err error) {
 			t.conn.SetReadDeadline(time.Now().Add(t.readTimeout))
 		}
 		n, err = t.conn.Read(b)
+		//Explicitly checking connectionreset error from read operation, so that we recycle the connection actively
+		if err != nil {
+			if syserr, ok := err.(*net.OpError).Err.(*os.SyscallError); ok {
+				if syserr.Err == unix.ECONNRESET {
+					return 0, driver.ErrBadConn
+				}
+			}
+		}
 		if t.readTimeout != 0 {
 			// Clear the deadline if we have one set
 			t.conn.SetReadDeadline(time.Time{})
@@ -42,6 +53,14 @@ func (t *timeoutConn) Write(b []byte) (n int, err error) {
 			t.conn.SetWriteDeadline(time.Now().Add(t.writeTimeout))
 		}
 		n, err = t.conn.Write(b)
+		//Explicitly checking connectionreset error from write operation, so that we recycle the connection actively
+		if err != nil {
+			if syserr, ok := err.(*net.OpError).Err.(*os.SyscallError); ok {
+				if syserr.Err == unix.ECONNRESET {
+					return 0, driver.ErrBadConn
+				}
+			}
+		}
 		if t.writeTimeout != 0 {
 			// Clear the deadline if we have one set
 			t.conn.SetWriteDeadline(time.Time{})
