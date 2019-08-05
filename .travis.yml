@@ -13,4 +13,3 @@ install:
 
 script:
   - go build ./...
-  - $HOME/gopath/bin/goveralls -service=travis-ci
