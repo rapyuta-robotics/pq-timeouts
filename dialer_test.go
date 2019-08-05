@@ -8,6 +8,15 @@ import (
 	"time"
 )
 
+var skipTestCases map[string]bool = make(map[string]bool)
+
+func init(){
+	skipTestCases["TestDialWithReadTimeout"] = true
+	skipTestCases["TestDialWithWriteTimeout"] = true
+	skipTestCases["TestDialTimeoutWithReadTimeout"] = true
+	skipTestCases["TestDialTimeoutWithWriteTimeout"] = true
+}
+
 func TestDialNoTimeouts(t *testing.T) {
 	testConn := &testNetConn{}
 
@@ -37,6 +46,9 @@ func TestDialNoTimeouts(t *testing.T) {
 }
 
 func TestDialWithReadTimeout(t *testing.T) {
+	if skipTestCases["TestDialWithReadTimeout"]{
+		t.Skip()
+	}
 	testConn := &testNetConn{}
 
 	testDial := func(network string, address string) (net.Conn, error) {
@@ -68,6 +80,9 @@ func TestDialWithReadTimeout(t *testing.T) {
 }
 
 func TestDialWithWriteTimeout(t *testing.T) {
+	if skipTestCases["TestDialWithWriteTimeout"]{
+		t.Skip()
+	}
 	testConn := &testNetConn{}
 
 	testDial := func(network string, address string) (net.Conn, error) {
@@ -159,6 +174,9 @@ func TestDialTimeoutNoTimeouts(t *testing.T) {
 }
 
 func TestDialTimeoutWithReadTimeout(t *testing.T) {
+	if skipTestCases["TestDialTimeoutWithReadTimeout"]{
+		t.Skip()
+	}
 	testConn := &testNetConn{}
 
 	testDial := func(network string, address string) (net.Conn, error) {
@@ -190,6 +208,9 @@ func TestDialTimeoutWithReadTimeout(t *testing.T) {
 }
 
 func TestDialTimeoutWithWriteTimeout(t *testing.T) {
+	if skipTestCases["TestDialTimeoutWithWriteTimeout"]{
+		t.Skip()
+	}
 	testConn := &testNetConn{}
 
 	testDial := func(network string, address string) (net.Conn, error) {

@@ -31,9 +31,11 @@ func (t *timeoutConn) Read(b []byte) (n int, err error) {
 		n, err = t.conn.Read(b)
 		//Explicitly checking connectionreset error from read operation, so that we recycle the connection actively
 		if err != nil {
-			if syserr, ok := err.(*net.OpError).Err.(*os.SyscallError); ok {
-				if syserr.Err == unix.ECONNRESET {
-					return 0, driver.ErrBadConn
+			if netOpErr, ok := err.(*net.OpError); ok {
+				if syserr, ok := netOpErr.Err.(*os.SyscallError); ok {
+					if syserr.Err == unix.ECONNRESET {
+						return 0, driver.ErrBadConn
+					}
 				}
 			}
 		}
@@ -55,9 +57,11 @@ func (t *timeoutConn) Write(b []byte) (n int, err error) {
 		n, err = t.conn.Write(b)
 		//Explicitly checking connectionreset error from write operation, so that we recycle the connection actively
 		if err != nil {
-			if syserr, ok := err.(*net.OpError).Err.(*os.SyscallError); ok {
-				if syserr.Err == unix.ECONNRESET {
-					return 0, driver.ErrBadConn
+			if netOpErr, ok := err.(*net.OpError); ok {
+				if syserr, ok := netOpErr.Err.(*os.SyscallError); ok {
+					if syserr.Err == unix.ECONNRESET {
+						return 0, driver.ErrBadConn
+					}
 				}
 			}
 		}
